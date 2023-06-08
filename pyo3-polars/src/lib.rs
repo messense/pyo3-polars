@@ -70,6 +70,10 @@ pub struct PyDataFrame(pub DataFrame);
 /// from disk
 pub struct PyLazyFrame(pub LazyFrame);
 
+#[repr(transparent)]
+#[derive(Debug, Clone)]
+pub struct PyAnyValue<'a>(pub AnyValue<'a>);
+
 impl From<PyDataFrame> for DataFrame {
     fn from(value: PyDataFrame) -> Self {
         value.0
@@ -89,6 +93,12 @@ impl From<PyLazyFrame> for LazyFrame {
     }
 }
 
+impl<'a> From<PyAnyValue<'a>> for AnyValue<'a> {
+    fn from(value: PyAnyValue<'a>) -> Self {
+        value.0
+    }
+}
+
 impl AsRef<Series> for PySeries {
     fn as_ref(&self) -> &Series {
         &self.0
@@ -104,6 +114,12 @@ impl AsRef<DataFrame> for PyDataFrame {
 #[cfg(feature = "lazy")]
 impl AsRef<LazyFrame> for PyLazyFrame {
     fn as_ref(&self) -> &LazyFrame {
+        &self.0
+    }
+}
+
+impl<'a> AsRef<AnyValue<'a>> for PyAnyValue<'a> {
+    fn as_ref(&self) -> &AnyValue<'a> {
         &self.0
     }
 }
@@ -150,6 +166,12 @@ impl<'a> FromPyObject<'a> for PyLazyFrame {
     }
 }
 
+impl<'a> FromPyObject<'a> for PyAnyValue<'a> {
+    fn extract(ob: &'a PyAny) -> PyResult<Self> {
+        todo!()
+    }
+}
+
 impl IntoPy<PyObject> for PySeries {
     fn into_py(self, py: Python<'_>) -> PyObject {
         let s = self.0.rechunk();
@@ -191,5 +213,11 @@ impl IntoPy<PyObject> for PyLazyFrame {
 
         instance.call_method1("__setstate__", (&*writer,)).unwrap();
         instance.into_py(py)
+    }
+}
+
+impl<'a> IntoPy<PyObject> for PyAnyValue<'a> {
+    fn into_py(self, py: Python<'_>) -> PyObject {
+        todo!()
     }
 }
